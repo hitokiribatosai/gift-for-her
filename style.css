@@ -1,0 +1,456 @@
+/* ========================================
+   DESIGN TOKENS
+   ======================================== */
+:root {
+  /* Background & Surface */
+  --bg-deep:        #0f0e17;
+  --bg-surface:     #1a1830;
+  --bg-card:        rgba(30, 27, 56, 0.92);
+  --bg-glass:       rgba(255, 255, 255, 0.04);
+
+  /* Text */
+  --text-primary:   #fffffe;
+  --text-secondary: #b8b5d0;
+  --text-muted:     #6e6b8a;
+
+  /* Accent */
+  --accent-glow:    #c9a0ff;
+  --accent-warm:    #ffc2d4;
+  --accent-sky:     #90c9ff;
+
+  /* Typography */
+  --font-body:     'Outfit', sans-serif;
+  --font-handwritten: 'Caveat', cursive;
+
+  /* Sizing */
+  --radius-sm:  8px;
+  --radius-md:  16px;
+  --radius-lg:  24px;
+  --radius-xl:  32px;
+
+  /* Transitions */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* ========================================
+   RESET & BASE
+   ======================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+}
+
+/* ========================================
+   AMBIENT PARTICLE BACKGROUND
+   ======================================== */
+#particles-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+  animation: float-particle linear infinite;
+}
+
+@keyframes float-particle {
+  0% {
+    opacity: 0;
+    transform: translateY(100vh) scale(0);
+  }
+  10% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10vh) scale(1);
+  }
+}
+
+/* ========================================
+   HEADER
+   ======================================== */
+#app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  text-align: center;
+  padding: 28px 20px 16px;
+  background: linear-gradient(to bottom, var(--bg-deep) 60%, transparent);
+  pointer-events: none;
+}
+
+.title-handwritten {
+  font-family: var(--font-handwritten);
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent-glow), var(--accent-warm), var(--accent-sky));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 1px;
+  text-shadow: none;
+  filter: drop-shadow(0 0 30px rgba(201, 160, 255, 0.25));
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  font-weight: 300;
+  letter-spacing: 0.5px;
+}
+
+/* ========================================
+   GRAPH CONTAINER
+   ======================================== */
+#graph-container {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+#tree-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ========================================
+   D3 NODE STYLES (SVG)
+   ======================================== */
+
+/* Central hub */
+.node-center circle {
+  fill: url(#centerGradient);
+  stroke: rgba(201, 160, 255, 0.4);
+  stroke-width: 2;
+  filter: url(#glow);
+}
+
+.node-center text {
+  fill: var(--text-primary);
+  font-family: var(--font-handwritten);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* Leaf nodes */
+.node-leaf {
+  cursor: pointer;
+  transition: transform 0.2s var(--ease-spring);
+}
+
+.node-leaf:hover .node-ring {
+  stroke-opacity: 1;
+  stroke-width: 3;
+}
+
+.node-leaf .node-bg {
+  transition: filter 0.3s ease;
+}
+
+.node-leaf:hover .node-bg {
+  filter: brightness(1.25) saturate(1.2);
+}
+
+/* Discovered glow */
+.node-leaf.discovered .node-ring {
+  stroke-opacity: 1;
+  stroke-width: 3;
+  animation: pulse-ring 2.4s ease-in-out infinite;
+}
+
+.node-leaf.discovered .discovered-glow {
+  opacity: 1;
+}
+
+@keyframes pulse-ring {
+  0%, 100% { stroke-width: 3; stroke-opacity: 0.7; }
+  50%      { stroke-width: 5; stroke-opacity: 1;   }
+}
+
+/* Links */
+.link-line {
+  stroke: rgba(201, 160, 255, 0.12);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+/* Icon text inside node */
+.node-icon {
+  font-size: 22px;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+/* Label text below node */
+.node-label {
+  fill: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 400;
+  text-anchor: middle;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+/* ========================================
+   DETAIL OVERLAY + CARD
+   ======================================== */
+#detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+#detail-overlay.hidden {
+  pointer-events: none;
+}
+
+.overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 9, 20, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-smooth);
+}
+
+#detail-overlay:not(.hidden) .overlay-backdrop {
+  opacity: 1;
+}
+
+.detail-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid rgba(201, 160, 255, 0.12);
+  border-radius: var(--radius-xl);
+  padding: 40px 36px 36px;
+  max-width: 460px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  text-align: center;
+  transform: scale(0.85) translateY(30px);
+  opacity: 0;
+  transition: transform 0.5s var(--ease-spring), opacity 0.4s var(--ease-smooth);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.5),
+    0 0 60px rgba(201, 160, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+#detail-overlay:not(.hidden) .detail-card {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+/* Close button */
+.close-btn {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  font-size: 1.6rem;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+  transform: rotate(90deg);
+}
+
+/* Card icon */
+.card-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 12px rgba(201, 160, 255, 0.3));
+}
+
+/* Card title */
+.card-title {
+  font-family: var(--font-handwritten);
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent-glow), var(--accent-warm));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+
+/* Divider */
+.card-divider {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-glow), transparent);
+  margin: 12px auto 20px;
+  border-radius: 2px;
+}
+
+/* Card image */
+.card-image-wrapper {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 20px;
+  max-height: 220px;
+  display: none;
+}
+
+.card-image-wrapper.has-image {
+  display: block;
+}
+
+.card-image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Card text */
+.card-text {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin-bottom: 16px;
+  font-weight: 300;
+}
+
+/* Card quote */
+.card-quote {
+  font-family: var(--font-handwritten);
+  font-size: 1.25rem;
+  color: var(--accent-warm);
+  font-style: normal;
+  padding: 16px 20px;
+  background: rgba(255, 194, 212, 0.06);
+  border-left: 3px solid var(--accent-warm);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  text-align: left;
+  display: none;
+}
+
+.card-quote.has-quote {
+  display: block;
+}
+
+/* ========================================
+   DISCOVERY COUNTER
+   ======================================== */
+#discovery-counter {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  background: var(--bg-card);
+  border: 1px solid rgba(201, 160, 255, 0.15);
+  border-radius: 100px;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transition: all 0.4s var(--ease-spring);
+}
+
+#discovery-counter.all-found {
+  border-color: rgba(201, 160, 255, 0.4);
+  box-shadow: 0 0 40px rgba(201, 160, 255, 0.15), 0 8px 32px rgba(0,0,0,0.3);
+}
+
+#counter-icon {
+  font-size: 1.2rem;
+  animation: sway-icon 3s ease-in-out infinite;
+}
+
+@keyframes sway-icon {
+  0%, 100% { transform: rotate(-8deg); }
+  50%      { transform: rotate(8deg);  }
+}
+
+/* ========================================
+   SCROLLBAR
+   ======================================== */
+.detail-card::-webkit-scrollbar {
+  width: 6px;
+}
+
+.detail-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.detail-card::-webkit-scrollbar-thumb {
+  background: rgba(201, 160, 255, 0.2);
+  border-radius: 3px;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 600px) {
+  .detail-card {
+    padding: 32px 24px 28px;
+    border-radius: var(--radius-lg);
+  }
+
+  .card-title {
+    font-size: 1.6rem;
+  }
+
+  .card-text {
+    font-size: 0.88rem;
+  }
+
+  #app-header {
+    padding: 18px 16px 10px;
+  }
+
+  .title-handwritten {
+    font-size: 2rem;
+  }
+}

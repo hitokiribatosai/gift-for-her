@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="An interactive memory tree — explore our cherished moments and memories through a beautiful animated graph." />
+  <title>Our Memory Tree 🌳</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Caveat:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Ambient floating particles -->
+  <div id="particles-bg"></div>
+
+  <!-- Main title -->
+  <header id="app-header">
+    <h1 class="title-handwritten">Our Memory Tree</h1>
+    <p class="subtitle">Click a leaf to uncover a memory ✨</p>
+  </header>
+
+  <!-- D3 graph canvas -->
+  <div id="graph-container">
+    <svg id="tree-svg"></svg>
+  </div>
+
+  <!-- Detail overlay -->
+  <div id="detail-overlay" class="overlay hidden" aria-hidden="true">
+    <div class="overlay-backdrop"></div>
+    <div class="detail-card" role="dialog" aria-modal="true">
+      <button id="close-card" class="close-btn" aria-label="Close card">&times;</button>
+      <div class="card-icon" id="card-icon"></div>
+      <h2 class="card-title" id="card-title"></h2>
+      <div class="card-divider"></div>
+      <div class="card-image-wrapper" id="card-image-wrapper">
+        <img id="card-image" alt="" />
+      </div>
+      <p class="card-text" id="card-text"></p>
+      <blockquote class="card-quote" id="card-quote"></blockquote>
+    </div>
+  </div>
+
+  <!-- Discovery counter -->
+  <div id="discovery-counter">
+    <span id="counter-icon">🍃</span>
+    <span id="counter-text">0 / 10 discovered</span>
+  </div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
