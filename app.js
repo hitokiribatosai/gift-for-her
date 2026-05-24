@@ -13,7 +13,7 @@
       icon: '🎵',
       color: '#c9a0ff',   // lavender
       radius: 34,
-      text: 'Every melody we share becomes the soundtrack of us. From late-night car rides singing off-key to kitchen dancing on rainy afternoons — these songs hold our heartbeats.',
+      text: 'All comes to my mind are eyes of you by pretty much and snowman by sia',
       quote: '"Music is the shorthand of emotion." — Leo Tolstoy',
       image: 'images/our-songs.png',
     },
@@ -33,7 +33,7 @@
       icon: '💜',
       color: '#ffc2d4',   // rose
       radius: 36,
-      text: 'The way you laugh with your whole body. How you remember the tiniest details. Your stubborn optimism. The warmth of your hand finding mine in the dark. Everything.',
+      text: 'The way you laugh with your whole body. How you remember the tiniest details. Your stubborn optimism. The warmth of your hand finding mine in the dark. Everything. I love your jealousy over the tiniest details, I love the way u send me u crying nd I love that and want to comfort it.',
       quote: '"I love you not only for what you are, but for what I am when I am with you."',
       image: 'images/things-i-love.png',
     },
@@ -43,7 +43,7 @@
       icon: '😂',
       color: '#ffd6a5',   // peach
       radius: 30,
-      text: 'Nobody else would understand why "duck" makes us cry-laugh, or why we can\'t look at each other in elevators. Our private language of absurdity is my favorite thing.',
+      text: 'I just like it when we laugh on the stupidest things in a convo',
       quote: '"We are all a little weird and life\'s a little weird…"',
       image: 'images/inside-jokes.png',
     },
@@ -63,7 +63,7 @@
       icon: '🍳',
       color: '#fdcb6e',   // sunshine
       radius: 30,
-      text: 'That pasta we accidentally perfected at midnight. Your grandmother\'s soup that tastes like a hug. The pancakes we make every Sunday morning. Love is the secret ingredient.',
+      text: 'I just LOVE IT when you send me those recipes',
       quote: '"Cooking is love made visible."',
       image: 'images/our-recipes.png',
     },
@@ -93,7 +93,7 @@
       icon: '☕',
       color: '#fab1a0',   // coral
       radius: 31,
-      text: 'Your hoodie that still smells like you. The playlist we fall asleep to. Hot chocolate on cold nights. That one show we\'ve rewatched four times and still love.',
+      text: 'Our convo nd me reading ur messages is my comfort, nd why not your voice in the future',
       quote: '"Home is not a place — it\'s a feeling."',
       image: 'images/comfort-things.png',
     },
