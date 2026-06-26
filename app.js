@@ -702,6 +702,8 @@
       celebOverlay.setAttribute('aria-hidden', 'true');
       if (frame) cancelAnimationFrame(frame);
       confettiCanvas.classList.remove('active');
+      // Kick off the Easter egg chain after a short delay
+      setTimeout(initEasterEgg, 600);
     }, { once: true });
   }
 
@@ -764,6 +766,100 @@
     clearTimeout(swipeHintTimer);
     const hint = document.getElementById('swipe-hint');
     hint.classList.remove('visible');
+  }
+
+  /* ══════════════════════════════════════════════
+     🥚  EASTER EGG — Corner Bubble Chain
+     ══════════════════════════════════════════════ */
+  function initEasterEgg() {
+    const bubbleTR     = document.getElementById('egg-bubble-tr');
+    const bubbleBL     = document.getElementById('egg-bubble-bl');
+    const bubbleTL     = document.getElementById('egg-bubble-tl');
+    const finalOverlay = document.getElementById('egg-final-overlay');
+    const finalClose   = document.getElementById('egg-final-close');
+
+    /* ── Helper: show a bubble with pop-in animation ── */
+    function showBubble(el) {
+      el.classList.remove('hidden', 'egg-pop-out');
+      el.classList.add('egg-pop-in');
+      // After pop-in finishes, keep only the bob animation
+      setTimeout(() => el.classList.remove('egg-pop-in'), 500);
+    }
+
+    /* ── Helper: dismiss a bubble with pop-out ── */
+    function dismissBubble(el, cb) {
+      el.classList.remove('tooltip-visible');
+      el.classList.add('egg-pop-out');
+      setTimeout(() => {
+        el.classList.add('hidden');
+        el.classList.remove('egg-pop-out');
+        if (cb) cb();
+      }, 380);
+    }
+
+    /* ── Helper: show tooltip briefly then leave it visible ── */
+    function flashTooltip(el) {
+      el.classList.add('tooltip-visible');
+    }
+
+    /* ── Step 1: Show top-right bubble ── */
+    showBubble(bubbleTR);
+
+    bubbleTR.addEventListener('click', function onClickTR() {
+      bubbleTR.removeEventListener('click', onClickTR);
+      // Show the "oops" tooltip, then after a moment dismiss and show bottom-left
+      flashTooltip(bubbleTR);
+      setTimeout(() => {
+        dismissBubble(bubbleTR, () => {
+          /* ── Step 2: Show bottom-left bubble ── */
+          showBubble(bubbleBL);
+
+          bubbleBL.addEventListener('click', function onClickBL() {
+            bubbleBL.removeEventListener('click', onClickBL);
+            flashTooltip(bubbleBL);
+            setTimeout(() => {
+              dismissBubble(bubbleBL, () => {
+                /* ── Step 3: Show top-left bubble ── */
+                showBubble(bubbleTL);
+
+                bubbleTL.addEventListener('click', function onClickTL() {
+                  bubbleTL.removeEventListener('click', onClickTL);
+                  dismissBubble(bubbleTL, () => {
+                    /* ── Step 4: Final secret message ── */
+                    finalOverlay.classList.remove('hidden');
+                    finalOverlay.setAttribute('aria-hidden', 'false');
+
+                    // Play a soft blue chord
+                    try {
+                      const ac  = getAudioCtx();
+                      const now = ac.currentTime;
+                      [440, 554, 659, 880].forEach((freq, i) => {
+                        const osc  = ac.createOscillator();
+                        const gain = ac.createGain();
+                        osc.connect(gain);
+                        gain.connect(ac.destination);
+                        osc.type = 'sine';
+                        osc.frequency.value = freq;
+                        gain.gain.setValueAtTime(0, now + i * 0.1);
+                        gain.gain.linearRampToValueAtTime(0.1, now + i * 0.1 + 0.04);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 2);
+                        osc.start(now + i * 0.1);
+                        osc.stop(now + i * 0.1 + 2);
+                      });
+                    } catch (e) { /* silent */ }
+                  });
+                });
+              });
+            }, 1200);
+          });
+        });
+      }, 1000);
+    });
+
+    finalClose.addEventListener('click', () => {
+      finalOverlay.classList.add('hidden');
+      finalOverlay.setAttribute('aria-hidden', 'true');
+    }, { once: true });
   }
 
 })();

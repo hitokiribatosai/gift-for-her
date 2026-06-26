@@ -65,6 +65,47 @@
     <span>← Swipe to navigate →</span>
   </div>
 
+  <!-- ═══ EASTER EGG BUBBLES ═══ -->
+
+  <!-- Step 1: Top-right bubble -->
+  <div id="egg-bubble-tr" class="egg-bubble egg-bubble--tr hidden" aria-label="Secret bubble top right">
+    <span class="egg-bubble-inner">🫧</span>
+    <div class="egg-tooltip egg-tooltip--below">
+      psst… look at the top right,<br>you unlocked something 👀
+    </div>
+  </div>
+
+  <!-- Step 2: Bottom-left bubble -->
+  <div id="egg-bubble-bl" class="egg-bubble egg-bubble--bl hidden" aria-label="Secret bubble bottom left">
+    <span class="egg-bubble-inner">🫧</span>
+    <div class="egg-tooltip egg-tooltip--above">
+      oops meant bottom left 😅
+    </div>
+  </div>
+
+  <!-- Step 3: Top-left bubble -->
+  <div id="egg-bubble-tl" class="egg-bubble egg-bubble--tl hidden" aria-label="Secret bubble top left">
+    <span class="egg-bubble-inner">🫧</span>
+    <div class="egg-tooltip egg-tooltip--below">
+      thought it's that easy 😂<br>check top left for the real one
+    </div>
+  </div>
+
+  <!-- Step 4: Final secret message overlay -->
+  <div id="egg-final-overlay" class="hidden" aria-hidden="true">
+    <div class="egg-final-card">
+      <div class="egg-final-icon">💙</div>
+      <h2 class="egg-final-title">The Real One</h2>
+      <div class="card-divider"></div>
+      <p class="egg-final-text">
+        if allah means us to be we will be,<br>
+        no matter what obstacle is thrown in the way,<br>
+        so inchaallah we be together for life 💙
+      </p>
+      <button id="egg-final-close" class="celebration-btn">Forever 💙</button>
+    </div>
+  </div>
+
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="app.js"></script>
 </body>
