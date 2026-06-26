@@ -113,6 +113,8 @@
   const discoveredSet = new Set();
   let simulation;
   let nodeEls, linkEls;
+  let currentMemoryIndex = 0; // for swipe navigation
+  let isCardOpen = false;
 
   /* ── DOM refs ─────────────────────────────────── */
   const svg       = d3.select('#tree-svg');
@@ -245,6 +247,8 @@
   // Click handler
   leaves.on('click', (event, d) => {
     event.stopPropagation();
+    currentMemoryIndex = MEMORIES.findIndex(m => m.id === d.id);
+    playChime(d.color);
     openCard(d);
   });
 
@@ -278,11 +282,10 @@
   }
 
   /* ── Buoyancy / sway animation ────────────────── */
-  // Each leaf gets a gentle, continuous oscillation
   leaves.each(function (d, i) {
     const g = d3.select(this);
-    const amp   = 3 + Math.random() * 4;     // px sway amplitude
-    const dur   = 3000 + Math.random() * 2000; // ms cycle
+    const amp   = 3 + Math.random() * 4;
+    const dur   = 3000 + Math.random() * 2000;
     const delay = Math.random() * dur;
 
     function sway() {
@@ -303,7 +306,6 @@
         .on('end', sway);
     }
 
-    // Start sway after simulation cools down
     setTimeout(sway, 3000 + i * 200);
   });
 
@@ -327,15 +329,12 @@
 
   /* ── Detail card ──────────────────────────────── */
   function openCard(mem) {
-    // Mark discovered
     markDiscovered(mem.id);
 
-    // Populate card
     document.getElementById('card-icon').textContent  = mem.icon;
     document.getElementById('card-title').textContent = mem.label.replace('\n', ' ');
     document.getElementById('card-text').textContent  = mem.text;
 
-    // Image
     const imgWrapper = document.getElementById('card-image-wrapper');
     const img        = document.getElementById('card-image');
     if (mem.image) {
@@ -346,7 +345,6 @@
       imgWrapper.classList.remove('has-image');
     }
 
-    // Quote
     const quote = document.getElementById('card-quote');
     if (mem.quote) {
       quote.textContent = mem.quote;
@@ -355,7 +353,6 @@
       quote.classList.remove('has-quote');
     }
 
-    // Set accent color on card border
     const card = overlay.querySelector('.detail-card');
     card.style.borderColor = `${mem.color}33`;
     card.style.boxShadow = `
@@ -364,20 +361,29 @@
       inset 0 1px 0 rgba(255,255,255,0.06)
     `;
 
-    // Show
     overlay.classList.remove('hidden');
     overlay.setAttribute('aria-hidden', 'false');
+    isCardOpen = true;
+
+    // Show swipe hint on touch devices (first time only)
+    if ('ontouchstart' in window) {
+      showSwipeHint();
+    }
   }
 
   function closeCard() {
     overlay.classList.add('hidden');
     overlay.setAttribute('aria-hidden', 'true');
+    isCardOpen = false;
+    hideSwipeHint();
   }
 
   closeBtn.addEventListener('click', closeCard);
   overlay.querySelector('.overlay-backdrop').addEventListener('click', closeCard);
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && !overlay.classList.contains('hidden')) closeCard();
+    if (e.key === 'ArrowRight' && isCardOpen) navigateCard(1);
+    if (e.key === 'ArrowLeft'  && isCardOpen) navigateCard(-1);
   });
 
   /* ── Discovery tracking ───────────────────────── */
@@ -385,10 +391,8 @@
     if (discoveredSet.has(id)) return;
     discoveredSet.add(id);
 
-    // Add CSS class
     d3.select(`#node-${id}`).classed('discovered', true);
 
-    // Update counter
     const total = MEMORIES.length;
     const found = discoveredSet.size;
     document.getElementById('counter-text').textContent = `${found} / ${total} discovered`;
@@ -396,27 +400,370 @@
     if (found === total) {
       document.getElementById('discovery-counter').classList.add('all-found');
       document.getElementById('counter-icon').textContent = '🌟';
+      // Delay celebration to let card open first
+      setTimeout(() => {
+        closeCard();
+        launchCelebration();
+      }, 1800);
     }
   }
 
-  /* ── Ambient particles ────────────────────────── */
-  function spawnParticles() {
-    const container = document.getElementById('particles-bg');
-    const palette   = ['#c9a0ff', '#ffc2d4', '#90c9ff', '#a0e7e5', '#fdcb6e', '#ff9ff3'];
+  /* ══════════════════════════════════════════════
+     ✨  FEATURE 1 — FIREFLIES + SHOOTING STARS
+     ══════════════════════════════════════════════ */
+  (function initFireflies() {
+    const canvas = document.getElementById('firefly-canvas');
+    const ctx    = canvas.getContext('2d');
 
-    for (let i = 0; i < 35; i++) {
-      const el = document.createElement('div');
-      el.classList.add('particle');
-      const size = 2 + Math.random() * 5;
-      el.style.width  = `${size}px`;
-      el.style.height = `${size}px`;
-      el.style.left   = `${Math.random() * 100}%`;
-      el.style.background = palette[Math.floor(Math.random() * palette.length)];
-      el.style.animationDuration = `${12 + Math.random() * 18}s`;
-      el.style.animationDelay    = `${Math.random() * 15}s`;
-      container.appendChild(el);
+    const PALETTE = ['#c9a0ff', '#ffc2d4', '#90c9ff', '#a0e7e5', '#fdcb6e', '#ff9ff3', '#fab1a0', '#b8a9e8'];
+    const NUM_FIREFLIES = 40;
+
+    let cW, cH;
+    function resize() {
+      cW = canvas.width  = window.innerWidth;
+      cH = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    /* Firefly objects */
+    const fireflies = Array.from({ length: NUM_FIREFLIES }, () => makeFirefly());
+
+    function makeFirefly() {
+      return {
+        x:    Math.random() * (cW || window.innerWidth),
+        y:    Math.random() * (cH || window.innerHeight),
+        r:    1 + Math.random() * 2.5,
+        color: PALETTE[Math.floor(Math.random() * PALETTE.length)],
+        vx:   (Math.random() - 0.5) * 0.4,
+        vy:   (Math.random() - 0.5) * 0.4,
+        alpha: 0,
+        alphaDir: 1,
+        alphaSpeed: 0.005 + Math.random() * 0.012,
+        pulseOffset: Math.random() * Math.PI * 2,
+      };
+    }
+
+    /* Shooting stars */
+    const shootingStars = [];
+
+    function spawnShootingStar() {
+      shootingStars.push({
+        x: Math.random() * cW,
+        y: Math.random() * cH * 0.5,
+        len: 80 + Math.random() * 120,
+        speed: 6 + Math.random() * 6,
+        angle: Math.PI / 6 + (Math.random() - 0.5) * 0.3,
+        alpha: 1,
+        color: PALETTE[Math.floor(Math.random() * PALETTE.length)],
+      });
+    }
+
+    // Spawn a shooting star every 4–8 seconds
+    function scheduleStar() {
+      setTimeout(() => {
+        spawnShootingStar();
+        scheduleStar();
+      }, 4000 + Math.random() * 4000);
+    }
+    scheduleStar();
+
+    /* Animation loop */
+    let t = 0;
+    function animate() {
+      ctx.clearRect(0, 0, cW, cH);
+      t += 0.016;
+
+      // Draw fireflies
+      fireflies.forEach(f => {
+        // Drift
+        f.x += f.vx + Math.sin(t * 0.7 + f.pulseOffset) * 0.15;
+        f.y += f.vy + Math.cos(t * 0.5 + f.pulseOffset) * 0.1;
+
+        // Wrap around edges
+        if (f.x < -10) f.x = cW + 10;
+        if (f.x > cW + 10) f.x = -10;
+        if (f.y < -10) f.y = cH + 10;
+        if (f.y > cH + 10) f.y = -10;
+
+        // Pulse alpha
+        f.alpha += f.alphaDir * f.alphaSpeed;
+        if (f.alpha >= 0.85) { f.alpha = 0.85; f.alphaDir = -1; }
+        if (f.alpha <= 0.05) { f.alpha = 0.05; f.alphaDir = 1; }
+
+        // Draw glow
+        const grad = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r * 4);
+        grad.addColorStop(0, f.color + 'cc');
+        grad.addColorStop(1, f.color + '00');
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.r * 4, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.globalAlpha = f.alpha;
+        ctx.fill();
+
+        // Draw core
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+        ctx.fillStyle = f.color;
+        ctx.globalAlpha = f.alpha;
+        ctx.fill();
+      });
+
+      // Draw shooting stars
+      for (let i = shootingStars.length - 1; i >= 0; i--) {
+        const s = shootingStars[i];
+        const dx = Math.cos(s.angle) * s.len;
+        const dy = Math.sin(s.angle) * s.len;
+
+        const grad = ctx.createLinearGradient(s.x, s.y, s.x - dx, s.y - dy);
+        grad.addColorStop(0, s.color + Math.round(s.alpha * 255).toString(16).padStart(2, '0'));
+        grad.addColorStop(1, s.color + '00');
+
+        ctx.beginPath();
+        ctx.moveTo(s.x, s.y);
+        ctx.lineTo(s.x - dx, s.y - dy);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = s.alpha;
+        ctx.stroke();
+
+        s.x += Math.cos(s.angle) * s.speed;
+        s.y += Math.sin(s.angle) * s.speed;
+        s.alpha -= 0.025;
+
+        if (s.alpha <= 0 || s.x > cW + 50 || s.y > cH + 50) {
+          shootingStars.splice(i, 1);
+        }
+      }
+
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  })();
+
+  /* ══════════════════════════════════════════════
+     🔊  FEATURE 2 — CLICK CHIME SOUND (Web Audio)
+     ══════════════════════════════════════════════ */
+  let audioCtx = null;
+
+  function getAudioCtx() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioCtx;
+  }
+
+  function playChime(color) {
+    try {
+      const ctx = getAudioCtx();
+
+      // Map color to a pentatonic note frequency
+      const colorNoteMap = {
+        '#c9a0ff': 523.25,  // C5 — lavender
+        '#90c9ff': 587.33,  // D5 — sky
+        '#ffc2d4': 659.25,  // E5 — rose
+        '#ffd6a5': 698.46,  // F5 — peach
+        '#a0e7e5': 783.99,  // G5 — mint
+        '#fdcb6e': 880.00,  // A5 — sunshine
+        '#dfe6e9': 987.77,  // B5 — silver
+        '#b8a9e8': 1046.50, // C6 — twilight
+        '#fab1a0': 1174.66, // D6 — coral
+        '#ff9ff3': 1318.51, // E6 — magenta-pink
+      };
+
+      const freq = colorNoteMap[color] || 660;
+      const now  = ctx.currentTime;
+
+      // Oscillator 1 — main tone
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(freq, now);
+      osc1.frequency.exponentialRampToValueAtTime(freq * 1.02, now + 0.05);
+      gain1.gain.setValueAtTime(0, now);
+      gain1.gain.linearRampToValueAtTime(0.18, now + 0.02);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+      osc1.start(now);
+      osc1.stop(now + 0.9);
+
+      // Oscillator 2 — harmonic shimmer
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(freq * 2, now);
+      gain2.gain.setValueAtTime(0, now);
+      gain2.gain.linearRampToValueAtTime(0.07, now + 0.01);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+      osc2.start(now);
+      osc2.stop(now + 0.5);
+
+    } catch (e) {
+      // Audio not available — silently skip
     }
   }
-  spawnParticles();
+
+  /* ══════════════════════════════════════════════
+     🎆  FEATURE 3 — CONFETTI + CELEBRATION MODAL
+     ══════════════════════════════════════════════ */
+  function launchCelebration() {
+    const confettiCanvas = document.getElementById('confetti-canvas');
+    const celebOverlay   = document.getElementById('celebration-overlay');
+    const celebClose     = document.getElementById('celebration-close');
+    const ctx = confettiCanvas.getContext('2d');
+
+    confettiCanvas.width  = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+    confettiCanvas.classList.add('active');
+
+    const PALETTE = ['#c9a0ff', '#ffc2d4', '#90c9ff', '#fdcb6e', '#ff9ff3', '#a0e7e5', '#fab1a0', '#ffd6a5', '#ffffff'];
+    const pieces  = [];
+    const NUM     = 160;
+
+    for (let i = 0; i < NUM; i++) {
+      pieces.push({
+        x:     confettiCanvas.width / 2 + (Math.random() - 0.5) * 200,
+        y:     confettiCanvas.height / 2,
+        vx:    (Math.random() - 0.5) * 14,
+        vy:    -8 - Math.random() * 10,
+        rot:   Math.random() * Math.PI * 2,
+        rotV:  (Math.random() - 0.5) * 0.2,
+        w:     6 + Math.random() * 8,
+        h:     3 + Math.random() * 5,
+        color: PALETTE[Math.floor(Math.random() * PALETTE.length)],
+        alpha: 1,
+      });
+    }
+
+    let frame;
+    function drawConfetti() {
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      let allDone = true;
+
+      pieces.forEach(p => {
+        p.vy += 0.28;   // gravity
+        p.vx *= 0.99;   // air resistance
+        p.x  += p.vx;
+        p.y  += p.vy;
+        p.rot += p.rotV;
+        if (p.y > confettiCanvas.height - 40) p.alpha -= 0.035;
+        if (p.alpha > 0) allDone = false;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      });
+
+      if (!allDone) {
+        frame = requestAnimationFrame(drawConfetti);
+      } else {
+        confettiCanvas.classList.remove('active');
+      }
+    }
+
+    drawConfetti();
+
+    // Play a sparkle chord
+    try {
+      const ac  = getAudioCtx();
+      const now = ac.currentTime;
+      [523, 659, 784, 1047].forEach((freq, i) => {
+        const osc  = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, now + i * 0.08);
+        gain.gain.linearRampToValueAtTime(0.12, now + i * 0.08 + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 1.2);
+        osc.start(now + i * 0.08);
+        osc.stop(now + i * 0.08 + 1.2);
+      });
+    } catch (e) { /* silent */ }
+
+    // Show celebration modal after a brief pause
+    setTimeout(() => {
+      celebOverlay.classList.remove('hidden');
+      celebOverlay.setAttribute('aria-hidden', 'false');
+    }, 400);
+
+    celebClose.addEventListener('click', () => {
+      celebOverlay.classList.add('hidden');
+      celebOverlay.setAttribute('aria-hidden', 'true');
+      if (frame) cancelAnimationFrame(frame);
+      confettiCanvas.classList.remove('active');
+    }, { once: true });
+  }
+
+  /* ══════════════════════════════════════════════
+     📱  FEATURE 4 — MOBILE SWIPE NAVIGATION
+     ══════════════════════════════════════════════ */
+  let touchStartX  = null;
+  let touchStartY  = null;
+  const SWIPE_THRESHOLD = 50; // px
+
+  overlay.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  overlay.addEventListener('touchend', e => {
+    if (touchStartX === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+
+    // Only handle horizontal swipes (not accidental vertical scrolls)
+    if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      navigateCard(dx < 0 ? 1 : -1);
+    }
+    touchStartX = null;
+    touchStartY = null;
+  }, { passive: true });
+
+  function navigateCard(direction) {
+    const card      = overlay.querySelector('.detail-card');
+    const outClass  = direction > 0 ? 'swipe-left'  : 'swipe-right';
+    const inClass   = direction > 0 ? 'swipe-in-right' : 'swipe-in-left';
+
+    card.classList.add(outClass);
+    setTimeout(() => {
+      card.classList.remove(outClass);
+      currentMemoryIndex = (currentMemoryIndex + direction + MEMORIES.length) % MEMORIES.length;
+      const nextMem = MEMORIES[currentMemoryIndex];
+      playChime(nextMem.color);
+      openCard(nextMem);
+      card.classList.add(inClass);
+      setTimeout(() => card.classList.remove(inClass), 350);
+    }, 300);
+  }
+
+  /* ── Swipe hint helpers ───────────────────────── */
+  let swipeHintShown = false;
+  let swipeHintTimer = null;
+
+  function showSwipeHint() {
+    if (swipeHintShown) return;
+    swipeHintShown = true;
+    const hint = document.getElementById('swipe-hint');
+    hint.classList.remove('hidden');
+    requestAnimationFrame(() => hint.classList.add('visible'));
+    swipeHintTimer = setTimeout(hideSwipeHint, 3000);
+  }
+
+  function hideSwipeHint() {
+    clearTimeout(swipeHintTimer);
+    const hint = document.getElementById('swipe-hint');
+    hint.classList.remove('visible');
+  }
 
 })();

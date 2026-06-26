@@ -11,8 +11,8 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Ambient floating particles -->
-  <div id="particles-bg"></div>
+  <!-- Ambient fireflies / shooting stars -->
+  <canvas id="firefly-canvas"></canvas>
 
   <!-- Main title -->
   <header id="app-header">
@@ -45,6 +45,24 @@
   <div id="discovery-counter">
     <span id="counter-icon">🍃</span>
     <span id="counter-text">0 / 10 discovered</span>
+  </div>
+
+  <!-- Confetti canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Celebration overlay -->
+  <div id="celebration-overlay" class="hidden" aria-hidden="true">
+    <div class="celebration-card">
+      <div class="celebration-emoji">🌟</div>
+      <h2 class="celebration-title">You Found Everything!</h2>
+      <p class="celebration-subtitle">Every leaf holds a piece of us.<br>Thank you for exploring our little world. 💜</p>
+      <button id="celebration-close" class="celebration-btn">Close ✨</button>
+    </div>
+  </div>
+
+  <!-- Mobile swipe hint -->
+  <div id="swipe-hint" class="hidden">
+    <span>← Swipe to navigate →</span>
   </div>
 
   <script src="https://d3js.org/d3.v7.min.js"></script>
