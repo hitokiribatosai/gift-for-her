@@ -805,20 +805,31 @@
     /* ── Step 1: Show top-right bubble ── */
     showBubble(bubbleTR);
 
+    let trOpened = false;
     bubbleTR.addEventListener('click', function onClickTR() {
-      bubbleTR.removeEventListener('click', onClickTR);
-      // Show the "oops" tooltip, then after a moment dismiss and show bottom-left
-      flashTooltip(bubbleTR);
-      setTimeout(() => {
+      if (!trOpened) {
+        // 1st click — show the tooltip, stay open
+        trOpened = true;
+        flashTooltip(bubbleTR);
+      } else {
+        // 2nd click — dismiss and go to next
+        bubbleTR.removeEventListener('click', onClickTR);
         dismissBubble(bubbleTR, () => {
+
           /* ── Step 2: Show bottom-left bubble ── */
           showBubble(bubbleBL);
 
+          let blOpened = false;
           bubbleBL.addEventListener('click', function onClickBL() {
-            bubbleBL.removeEventListener('click', onClickBL);
-            flashTooltip(bubbleBL);
-            setTimeout(() => {
+            if (!blOpened) {
+              // 1st click — show tooltip, stay open
+              blOpened = true;
+              flashTooltip(bubbleBL);
+            } else {
+              // 2nd click — dismiss and go to next
+              bubbleBL.removeEventListener('click', onClickBL);
               dismissBubble(bubbleBL, () => {
+
                 /* ── Step 3: Show top-left bubble ── */
                 showBubble(bubbleTL);
 
@@ -849,11 +860,13 @@
                     } catch (e) { /* silent */ }
                   });
                 });
+
               });
-            }, 1200);
+            }
           });
+
         });
-      }, 1000);
+      }
     });
 
     finalClose.addEventListener('click', () => {
